@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XHS AI Prototype</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #1a1a1a;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  gap: 48px;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+/* ---- PHONE SHELL ---- */
+.phone-shell {
+  width: 320px;
+  background: #111;
+  border-radius: 44px;
+  padding: 14px;
+  box-shadow: 0 0 0 1px #333, 0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 1px #444;
+  position: relative;
+}
+.phone-shell::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 6px;
+  background: #222;
+  border-radius: 3px;
+  z-index: 10;
+}
+.phone-screen {
+  background: #fff;
+  border-radius: 32px;
+  overflow: hidden;
+  min-height: 580px;
+}
+
+/* ---- LABEL ---- */
+.proto-label {
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* ---- TOGGLE ---- */
+.toggle-bar {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 3px;
+  margin: 12px 16px 0;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #999;
+  transition: all 0.2s;
+}
+.toggle-btn.active {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+/* ---- TOP BAR ---- */
+.app-topbar {
+  background: #f7f7f7;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 0.5px solid #eee;
+  margin-top: 6px;
+}
+.app-topbar .back { font-size: 18px; color: #555; }
+.app-topbar input {
+  flex: 1;
+  border: none;
+  background: #e8e8e8;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: #888;
+  outline: none;
+}
+.app-topbar .see-orig { font-size: 11px; color: #888; }
+
+/* ---- PRODUCT IMAGE ---- */
+.prod-img-wrap {
+  background: #e8dece;
+  position: relative;
+  padding-top: 72%;
+}
+.prod-img-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+}
+
+/* CN annotations */
+.cn-ann { position: absolute; inset: 0; pointer-events: none; }
+.ann-v {
+  position: absolute;
+  left: 12%;
+  top: 28%;
+  transform: rotate(-90deg);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.ann-h {
+  position: absolute;
+  left: 22%;
+  top: 66%;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.ann-line { background: #e24b4a; height: 1px; width: 28px; }
+.ann-text { font-size: 9px; color: #e24b4a; font-weight: 700; white-space: nowrap; }
+.img-badge {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-size: 9px;
+  border-radius: 4px;
+  padding: 2px 7px;
+  color: #fff;
+}
+.img-badge.cn { background: #e24b4a; }
+.img-badge.ai { background: #639922; display: none; }
+
+/* ---- PRODUCT INFO ---- */
+.prod-info { padding: 12px 14px; }
+.prod-price { font-size: 16px; color: #e24b4a; font-weight: 700; }
+.prod-price span { font-size: 12px; color: #aaa; font-weight: 400; margin-left: 6px; }
+.coupon {
+  display: inline-block;
+  background: #fff0f0;
+  border: 0.5px solid #fcc;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: #e24b4a;
+  margin: 5px 0;
+}
+.prod-name { font-size: 13px; color: #111; font-weight: 500; line-height: 1.4; margin-bottom: 8px; }
+.prod-badges { display: flex; gap: 5px; margin-bottom: 8px; }
+.prod-badge { background: #f5f5f5; border-radius: 20px; padding: 3px 9px; font-size: 9px; color: #777; }
+.shipping {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #777;
+  padding: 8px 0;
+  border-top: 0.5px solid #f0f0f0;
+  border-bottom: 0.5px solid #f0f0f0;
+  margin-bottom: 8px;
+}
+
+/* ---- AI SPEC CARD ---- */
+.spec-card {
+  display: none;
+  background: #f8fdf4;
+  border: 0.5px solid #b5d97c;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.spec-card-top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.spec-card-top .lbl { font-size: 12px; font-weight: 500; color: #2d5a0e; }
+.spec-card-top .auto {
+  margin-left: auto;
+  font-size: 9px;
+  color: #639922;
+  background: #eaf3de;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.spec-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 7px; }
+.spec-cell {
+  background: #fff;
+  border: 0.5px solid #d4e8b0;
+  border-radius: 8px;
+  padding: 7px 4px;
+  text-align: center;
+}
+.spec-val { font-size: 15px; font-weight: 600; color: #111; }
+.spec-val small { font-size: 9px; color: #aaa; font-weight: 400; }
+.spec-dim { font-size: 9px; color: #888; margin-top: 1px; }
+.spec-cm { font-size: 9px; color: #ccc; }
+.spec-note { font-size: 9px; color: #639922; }
+
+/* ---- BOTTOM BTNS ---- */
+.bottom-btns {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 16px;
+  border-top: 0.5px solid #f0f0f0;
+}
+.btn-cart {
+  flex: 1; border: 1px solid #e24b4a; border-radius: 20px;
+  padding: 10px; text-align: center; font-size: 12px; color: #e24b4a; font-weight: 500;
+}
+.btn-buy {
+  flex: 1; background: #e24b4a; border-radius: 20px;
+  padding: 10px; text-align: center; font-size: 12px; color: #fff; font-weight: 500;
+}
+
+/* ========== SELLER SIDE ========== */
+.seller-topbar {
+  background: #f7f7f7;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 0.5px solid #eee;
+}
+.seller-topbar .back { font-size: 18px; color: #555; }
+.seller-topbar .title { font-size: 14px; font-weight: 600; color: #111; }
+.seller-topbar .preview { margin-left: auto; font-size: 12px; color: #e24b4a; }
+
+.ai-banner {
+  background: #f0f9e8;
+  border-bottom: 0.5px solid #c8e6a0;
+  padding: 9px 14px;
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: #3a7010;
+  line-height: 1.4;
+}
+
+.slot-wrap { padding: 12px 14px 0; }
+.slot-head { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+.t-req { background: #e24b4a; color: #fff; font-size: 9px; font-weight: 700; border-radius: 3px; padding: 1px 5px; }
+.t-opt { background: #bbb; color: #fff; font-size: 9px; font-weight: 700; border-radius: 3px; padding: 1px 5px; }
+.t-ai  { background: #639922; color: #fff; font-size: 9px; font-weight: 700; border-radius: 3px; padding: 1px 5px; }
+.slot-name-txt { font-size: 12px; font-weight: 600; color: #111; }
+.slot-hint-txt { font-size: 10px; color: #aaa; margin: 3px 0 10px 1px; }
+
+.slot-box {
+  border-radius: 10px;
+  padding: 10px 11px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 3px;
+}
+.slot-box:active { opacity: 0.85; }
+.s-fail { background: #fff8f8; border: 1.5px solid #f5a0a0; }
+.s-warn { background: #fffbf0; border: 1.5px solid #f5c842; }
+.s-pass { background: #f0f9e8; border: 1.5px solid #b5d97c; display: none; }
+.s-empty {
+  background: #f8f8f8;
+  border: 1.5px dashed #ccc;
+  text-align: center;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.slot-inner { display: flex; align-items: flex-start; gap: 9px; }
+.slot-thumb {
+  width: 48px; height: 48px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0; position: relative;
+}
+.err-dot {
+  position: absolute; bottom: -3px; right: -3px;
+  background: #e24b4a; border-radius: 50%;
+  width: 13px; height: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; color: #fff;
+}
+.slot-filename { font-size: 11px; font-weight: 500; color: #111; margin-bottom: 4px; }
+.sb { font-size: 9px; border-radius: 10px; padding: 1px 6px; display: inline-block; margin-left: 4px; }
+.sb-fail { background: #fdecea; color: #c0392b; }
+.sb-warn { background: #fef9e0; color: #b07d00; }
+.sb-pass { background: #e8f5e0; color: #3a7010; }
+.err-list { background: #fdecea; border-radius: 6px; padding: 5px 8px; margin-top: 3px; }
+.warn-list { background: #fef9e0; border-radius: 6px; padding: 5px 8px; margin-top: 3px; }
+.err-row { font-size: 9px; color: #c0392b; margin-bottom: 1px; }
+.warn-row { font-size: 9px; color: #b07d00; margin-bottom: 1px; }
+.fix-txt { font-size: 9px; color: #639922; margin-top: 5px; }
+.fix-txt u { cursor: pointer; }
+.pass-sub { font-size: 10px; color: #888; margin-top: 3px; }
+.pass-ai { font-size: 10px; color: #639922; margin-top: 2px; }
+
+.amazon-box {
+  background: #f0f9e8;
+  border-radius: 6px;
+  padding: 6px 9px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+.amazon-box-title { font-size: 9px; color: #3a7010; font-weight: 600; margin-bottom: 2px; }
+.amazon-box-body { font-size: 9px; color: #5a9020; }
+
+.opt-grid { display: flex; gap: 7px; margin-bottom: 10px; }
+.opt-cell {
+  flex: 1; aspect-ratio: 1;
+  background: #f5f5f5;
+  border: 1.5px dashed #ddd;
+  border-radius: 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 20px; color: #ddd; gap: 3px; cursor: pointer;
+}
+.opt-cell span { font-size: 9px; color: #ccc; }
+
+.pub-block {
+  margin: 0 14px 10px;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.pub-block.blocked { background: #fdecea; border: 0.5px solid #f5a0a0; }
+.pub-block.ready  { background: #f0f9e8; border: 0.5px solid #b5d97c; }
+.pub-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.pub-title.r { color: #c0392b; }
+.pub-title.g { color: #3a7010; }
+.pub-body { font-size: 10px; }
+.pub-body.r { color: #c0392b; }
+.pub-body.g { color: #3a7010; }
+
+.pub-btn {
+  display: block;
+  margin: 0 14px 20px;
+  border: none;
+  border-radius: 24px;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  width: calc(100% - 28px);
+  text-align: center;
+  transition: background 0.2s;
+}
+.pub-btn.off { background: #ddd; color: #fff; cursor: not-allowed; }
+.pub-btn.on  { background: #e24b4a; color: #fff; cursor: pointer; }
+
+.tap-hint { font-size: 8px; color: #ccc; text-align: right; margin-top: 4px; }
+.empty-icon { font-size: 22px; margin-bottom: 3px; }
+.empty-txt { font-size: 11px; color: #888; margin-bottom: 1px; }
+.empty-sub { font-size: 9px; color: #ccc; }
+</style>
+</head>
+<body>
+
+<!-- ===== BUYER SIDE ===== -->
+<div>
+  <div class="proto-label">买家侧 · 商品详情页</div>
+  <div class="phone-shell">
+    <div class="phone-screen">
+
+      <div class="toggle-bar">
+        <button class="toggle-btn active" id="bb" onclick="bBefore()">Before</button>
+        <button class="toggle-btn" id="ba" onclick="bAfter()">After · AI 尺寸卡</button>
+      </div>
+
+      <div class="app-topbar">
+        <span class="back">‹</span>
+        <input value="Search products" readonly>
+        <span class="see-orig">See original</span>
+      </div>
+
+      <div class="prod-img-wrap">
+        <div class="prod-img-inner">👜</div>
+        <div class="cn-ann" id="cna">
+          <div class="ann-v"><div class="ann-line"></div><span class="ann-text">高15厘米</span><div class="ann-line"></div></div>
+          <div class="ann-h"><div class="ann-line"></div><span class="ann-text">长25厘米</span><div class="ann-line"></div></div>
+          <div class="img-badge cn">中文标注</div>
+        </div>
+        <div class="img-badge ai" id="aib">✦ AI已处理</div>
+      </div>
+
+      <div class="prod-info">
+        <div class="prod-price">¥15.9 <span>≈$2.38 · 16.7k+ sold</span></div>
+        <div class="coupon">Shop coupon: buy ¥60 get ¥5 off</div>
+        <div class="prod-name">Bamboo Kitty Ins-style Korean Summer Handbag</div>
+        <div class="prod-badges">
+          <div class="prod-badge">1000+ positive reviews</div>
+          <div class="prod-badge">4K+ interested</div>
+        </div>
+        <div class="shipping">
+          <span>📦 Baoding → United States</span>
+          <span style="color:#111;font-weight:600">Free</span>
+        </div>
+
+        <div class="spec-card" id="sc">
+          <div class="spec-card-top">
+            <span>📐</span>
+            <span class="lbl">AI-extracted Dimensions</span>
+            <span class="auto">Auto-detected</span>
+          </div>
+          <div class="spec-grid">
+            <div class="spec-cell">
+              <div class="spec-val">9.8<small> in</small></div>
+              <div class="spec-dim">Length</div>
+              <div class="spec-cm">25 cm</div>
+            </div>
+            <div class="spec-cell">
+              <div class="spec-val">5.9<small> in</small></div>
+              <div class="spec-dim">Height</div>
+              <div class="spec-cm">15 cm</div>
+            </div>
+            <div class="spec-cell">
+              <div class="spec-val" style="font-size:12px">clutch</div>
+              <div class="spec-dim">Size ref</div>
+              <div class="spec-cm">small bag</div>
+            </div>
+          </div>
+          <div class="spec-note">ℹ iPad mini size · Auto-extracted · Verify with seller</div>
+        </div>
+      </div>
+
+      <div class="bottom-btns">
+        <div class="btn-cart">Add to cart</div>
+        <div class="btn-buy">Buy now</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== SELLER SIDE ===== -->
+<div>
+  <div class="proto-label">卖家侧 · 上传商品图片</div>
+  <div class="phone-shell">
+    <div class="phone-screen">
+
+      <div class="seller-topbar">
+        <span class="back">‹</span>
+        <span class="title">Upload Product Images</span>
+        <span class="preview">Preview</span>
+      </div>
+
+      <div class="ai-banner">
+        <span>✦</span>
+        <span>AI Image Check 已启用 — 必填槽位缺失时无法发布</span>
+      </div>
+
+      <!-- Slot 1 -->
+      <div class="slot-wrap">
+        <div class="slot-head">
+          <span class="t-req">必填</span>
+          <span class="slot-name-txt">① 主图</span>
+        </div>
+
+        <div class="slot-box s-fail" id="s1f" onclick="tog(1)">
+          <div class="slot-inner">
+            <div class="slot-thumb" style="background:#f5e0d0">👜<div class="err-dot">✕</div></div>
+            <div>
+              <div class="slot-filename">main_photo.jpg<span class="sb sb-fail">✕ 2 问题</span></div>
+              <div class="err-list">
+                <div class="err-row">⚠ 检测到中文文字（长25厘米, 高15厘米）</div>
+                <div class="err-row">⚠ 背景非纯白色</div>
+              </div>
+              <div class="fix-txt">→ AI 可自动移除文字 · <u>一键修复</u></div>
+            </div>
+          </div>
+          <div class="tap-hint">点击切换</div>
+        </div>
+        <div class="slot-box s-pass" id="s1p" onclick="tog(1)">
+          <div class="slot-inner">
+            <div class="slot-thumb" style="background:#e8f5e0">👜</div>
+            <div>
+              <div class="slot-filename">main_fixed.jpg<span class="sb sb-pass">✓ 通过</span></div>
+              <div class="pass-sub">白底 · 无文字 · 1200×1200px</div>
+            </div>
+          </div>
+        </div>
+        <div class="slot-hint-txt">要求：纯白背景 · 无水印 · 最小 1000px</div>
+      </div>
+
+      <!-- Slot 2 -->
+      <div class="slot-wrap">
+        <div class="slot-head">
+          <span class="t-req">必填</span>
+          <span class="slot-name-txt">② 环境使用图</span>
+        </div>
+        <div class="slot-box s-empty" id="s2e" onclick="tog(2)">
+          <div class="empty-icon">📷</div>
+          <div class="empty-txt">点击上传</div>
+          <div class="empty-sub">展示商品在真实场景中的使用效果</div>
+        </div>
+        <div class="slot-box s-pass" id="s2p" onclick="tog(2)">
+          <div class="slot-inner">
+            <div class="slot-thumb" style="background:#e8f0d8">🏖</div>
+            <div>
+              <div class="slot-filename">lifestyle.jpg<span class="sb sb-pass">✓ 通过</span></div>
+              <div class="pass-sub">真实场景 · 无文字叠加</div>
+            </div>
+          </div>
+        </div>
+        <div class="slot-hint-txt">要求：真实使用场景 · 自然光优先</div>
+      </div>
+
+      <!-- Slot 3 -->
+      <div class="slot-wrap">
+        <div class="slot-head">
+          <span class="t-req">必填</span>
+          <span class="slot-name-txt">③ 尺寸规格图</span>
+          <span class="t-ai">✦ AI强制校验</span>
+        </div>
+        <div class="slot-box s-warn" id="s3w" onclick="tog(3)">
+          <div class="slot-inner">
+            <div class="slot-thumb" style="background:#fdf3d0">📐</div>
+            <div>
+              <div class="slot-filename">spec.jpg<span class="sb sb-warn">⚠ 2 警告</span></div>
+              <div class="warn-list">
+                <div class="warn-row">⚠ 仅有厘米单位 — 必须标注英寸</div>
+                <div class="warn-row">⚠ 标注为中文 — 跨境商品须用英文</div>
+              </div>
+              <div class="fix-txt">→ AI 自动换算生成英文标注 · <u>应用修复</u></div>
+            </div>
+          </div>
+          <div class="tap-hint">点击切换</div>
+        </div>
+        <div class="slot-box s-pass" id="s3p" onclick="tog(3)">
+          <div class="slot-inner">
+            <div class="slot-thumb" style="background:#e8f5e0">📐</div>
+            <div>
+              <div class="slot-filename">spec_fixed.jpg<span class="sb sb-pass">✓ 通过</span></div>
+              <div class="pass-sub">英文 · 英寸+厘米 · 白底</div>
+              <div class="pass-ai">✦ 长25厘米 → Length 9.8 in (25 cm)</div>
+            </div>
+          </div>
+        </div>
+        <div class="amazon-box">
+          <div class="amazon-box-title">📐 必须格式（参照 Amazon 标准）：</div>
+          <div class="amazon-box-body">白底 · 英文 · 英寸为主+厘米备注 · L×W×H 清晰标注</div>
+        </div>
+      </div>
+
+      <!-- Slot 4 Optional -->
+      <div class="slot-wrap">
+        <div class="slot-head">
+          <span class="t-opt">选填</span>
+          <span class="slot-name-txt">④ 细节图 <span style="color:#bbb;font-weight:400">最多3张</span></span>
+        </div>
+        <div class="opt-grid">
+          <div class="opt-cell">+<span>添加</span></div>
+          <div class="opt-cell">+<span>添加</span></div>
+          <div class="opt-cell">+<span>添加</span></div>
+        </div>
+      </div>
+
+      <div class="pub-block blocked" id="pb">
+        <div class="pub-title r" id="pt">⛔ 暂无法发布</div>
+        <div class="pub-body r" id="pp">请修复必填问题后再上架</div>
+      </div>
+      <div class="pub-btn off" id="pubBtn">发布商品</div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Buyer
+function bBefore(){
+  document.getElementById('cna').style.display='block';
+  document.getElementById('aib').style.display='none';
+  document.getElementById('sc').style.display='none';
+  document.getElementById('bb').classList.add('active');
+  document.getElementById('ba').classList.remove('active');
+}
+function bAfter(){
+  document.getElementById('cna').style.display='none';
+  document.getElementById('aib').style.display='block';
+  document.getElementById('sc').style.display='block';
+  document.getElementById('ba').classList.add('active');
+  document.getElementById('bb').classList.remove('active');
+}
+
+// Seller
+var st={1:'fail',2:'empty',3:'warn'};
+var map={
+  1:{fail:'s1f',pass:'s1p'},
+  2:{empty:'s2e',pass:'s2p'},
+  3:{warn:'s3w',pass:'s3p'}
+};
+function tog(n){
+  var cur=st[n];
+  var next=cur==='pass'?(n===2?'empty':n===1?'fail':'warn'):'pass';
+  var hide=map[n][cur]; var show=map[n][next];
+  document.getElementById(hide).style.display='none';
+  document.getElementById(show).style.display='block';
+  st[n]=next;
+  chkPub();
+}
+function chkPub(){
+  var ok=st[1]==='pass'&&st[2]==='pass'&&st[3]==='pass';
+  var btn=document.getElementById('pubBtn');
+  var blk=document.getElementById('pb');
+  var pt=document.getElementById('pt');
+  var pp=document.getElementById('pp');
+  if(ok){
+    btn.className='pub-btn on';
+    blk.className='pub-block ready';
+    pt.className='pub-title g'; pt.textContent='✓ 全部通过';
+    pp.className='pub-body g';  pp.textContent='商品可以发布上架';
+  } else {
+    btn.className='pub-btn off';
+    blk.className='pub-block blocked';
+    pt.className='pub-title r'; pt.textContent='⛔ 暂无法发布';
+    pp.className='pub-body r';  pp.textContent='请修复必填问题后再上架';
+  }
+}
+</script>
+</body>
+</html>
