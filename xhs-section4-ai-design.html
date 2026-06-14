@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IV. AI 功能设计：商品图片规格标准化</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: #fafafa;
+    color: #111;
+    line-height: 1.7;
+    padding: 40px 24px;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 48px 52px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+  }
+
+  /* Section header */
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e24b4a;
+  }
+
+  /* Subsection */
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+    margin: 28px 0 10px;
+  }
+
+  h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin: 20px 0 8px;
+  }
+
+  p {
+    font-size: 13.5px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  /* Highlight box */
+  .bg-box {
+    background: #f8fdf4;
+    border-left: 3px solid #639922;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #2d5a0e;
+  }
+
+  .bg-box-red {
+    background: #fff8f8;
+    border-left: 3px solid #e24b4a;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #8b1a1a;
+  }
+
+  /* User card */
+  .user-card {
+    background: #f7f7f7;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 10px 0;
+  }
+
+  .user-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 8px;
+  }
+
+  .user-card ul {
+    padding-left: 18px;
+    font-size: 13px;
+    color: #444;
+  }
+
+  .user-card ul li {
+    margin-bottom: 4px;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 12.5px;
+  }
+
+  th {
+    background: #f0f0f0;
+    font-weight: 600;
+    color: #333;
+    padding: 9px 12px;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+  }
+
+  td {
+    padding: 9px 12px;
+    border: 1px solid #e8e8e8;
+    color: #444;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td {
+    background: #fafafa;
+  }
+
+  /* Tags */
+  .tag-red {
+    display: inline-block;
+    background: #e24b4a;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+  }
+
+  .tag-green {
+    display: inline-block;
+    background: #639922;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+  }
+
+  .tag-gray {
+    display: inline-block;
+    background: #aaa;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+  }
+
+  /* Code-style spec card */
+  .spec-card {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 14px 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 12px;
+    color: #cdd6f4;
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .flow-step {
+    background: #f0f9e8;
+    border: 1px solid #b5d97c;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: #2d5a0e;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .flow-arrow {
+    font-size: 16px;
+    color: #aaa;
+    padding: 0 6px;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 32px 0;
+  }
+
+  /* Decision box */
+  .decision-box {
+    background: #fffbf0;
+    border: 1px solid #f5c842;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #5a4000;
+  }
+
+  .decision-box strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #3a2800;
+  }
+
+  /* Summary table */
+  .summary-highlight td:first-child {
+    font-weight: 500;
+    color: #111;
+  }
+
+  /* Footer note */
+  .footer-note {
+    background: #f0f9e8;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 32px;
+    font-size: 13px;
+    color: #2d5a0e;
+    border: 1px solid #c8e6a0;
+  }
+
+  .footer-note strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="section-title">IV. AI 功能设计：商品图片规格标准化</div>
+
+  <!-- Background -->
+  <h3>问题背景</h3>
+  <p>在实际体验小红书海外购流程中，我发现商品详情页存在一个系统性问题：<strong>卖家上传的商品图片中，尺寸标注普遍为中文 + 厘米单位</strong>（如「长25厘米 / 高15厘米」），对美国用户完全不可读。这不是个别卖家的问题，而是平台缺乏图片规范强制机制导致的供给侧结构性缺陷。</p>
+
+  <div class="bg-box-red">
+    对比 Amazon 的商品图片标准：主图强制白底无文字、必须有独立的英文英寸尺寸展示图、违规商品直接下架。小红书目前没有等效机制。
+  </div>
+
+  <hr class="divider">
+
+  <!-- Users -->
+  <h3>用户 & 使用场景</h3>
+
+  <div class="user-card">
+    <div class="user-card-title">👤 用户 A：买家 Ken，26岁，Jersey City，新用户</div>
+    <ul>
+      <li><strong>场景：</strong>在小红书发现一款竹编包，想确认尺寸是否适合日常通勤使用</li>
+      <li><strong>现状痛点：</strong>商品图片上有红色中文标注「长25厘米/高15厘米」，Ken 完全看不懂；商品详情页没有英制单位参考；他需要打开 Google 手动换算，中途流失率极高</li>
+      <li><strong>需求：</strong>在不离开商品页的情况下，直接看到英寸尺寸和日常物品类比参考</li>
+    </ul>
+  </div>
+
+  <div class="user-card">
+    <div class="user-card-title">🏪 用户 B：卖家，宝鸡小商家，无设计团队</div>
+    <ul>
+      <li><strong>场景：</strong>在小红书发布跨境商品，习惯用国内拍摄素材直接上传</li>
+      <li><strong>现状痛点：</strong>不知道海外用户的信息需求，直接复用国内版图片（中文标注、厘米单位）</li>
+      <li><strong>需求：</strong>平台明确告知什么是合规图片，并提供低成本的合规路径（AI 辅助修复）</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Design -->
+  <h3>功能设计</h3>
+  <p>本设计分为两层，从供给侧入手，带动买家侧体验改善。</p>
+
+  <div class="flow">
+    <div class="flow-step">卖家上传图片</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">AI 强制槽位结构</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">AI 扫描 + 自动修复</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">达标方可上架</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">买家看到标准化图片 + AI 尺寸卡</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Layer 1 -->
+  <h3>层一：卖家侧 — 图片槽位强制规范（参照 Amazon 标准）</h3>
+  <p><strong>核心机制：强制槽位结构 + AI 扫描 + 不达标不能上架</strong></p>
+  <p>在卖家发布跨境商品时，图片上传模块改为结构化槽位，共 4 个：</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>槽位</th>
+        <th>类型</th>
+        <th>要求</th>
+        <th>AI 检测项</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>① 主图</td>
+        <td><span class="tag-red">必填</span></td>
+        <td>纯白背景、无文字水印、最小 1000px</td>
+        <td>检测背景色、文字叠加层、图片分辨率</td>
+      </tr>
+      <tr>
+        <td>② 环境图</td>
+        <td><span class="tag-red">必填</span></td>
+        <td>商品在真实场景中使用</td>
+        <td>检测是否为白底棚拍（若是则提示换图）</td>
+      </tr>
+      <tr>
+        <td>③ 尺寸规格图</td>
+        <td><span class="tag-red">必填</span> <span class="tag-green">✦ AI 强制</span></td>
+        <td>英文标注、英寸为主 + 厘米备注、白底</td>
+        <td>检测语言（中文报错）、单位（无英寸报错）、背景色</td>
+      </tr>
+      <tr>
+        <td>④ 细节图</td>
+        <td><span class="tag-gray">选填，最多3张</span></td>
+        <td>展示材质、做工、局部细节</td>
+        <td>无强制要求</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>槽位 ③（尺寸规格图）设计决策说明</h4>
+
+  <div class="decision-box">
+    <strong>为什么单独成槽而不允许把尺寸标注在主图上？</strong>
+    主图加文字会降低视觉吸引力，且 Amazon 标准明确禁止主图有任何文字覆盖。独立槽位既保证主图的视觉纯净度，也让尺寸信息有完整的展示空间。
+  </div>
+
+  <h4>AI 扫描 + 自动修复流程</h4>
+  <p>卖家上传图片后，AI 实时扫描，识别三类问题：</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>问题类型</th>
+        <th>处理方式</th>
+        <th>示例</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>⛔ 报错（阻断上架）</td>
+        <td>必须修复才能发布</td>
+        <td>主图有中文文字叠加、背景非白底</td>
+      </tr>
+      <tr>
+        <td>⚠ 警告（提示修复）</td>
+        <td>可忽略但影响转化评分</td>
+        <td>尺寸图仅有厘米单位无英寸换算、标注为中文</td>
+      </tr>
+      <tr>
+        <td>✦ 自动修复选项</td>
+        <td>AI 生成修复版本，卖家一键确认</td>
+        <td>「长25厘米」→「Length 9.8 in (25 cm)」</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>为什么选择强制而非建议？</h4>
+  <div class="bg-box-red">
+    速卖通等平台曾尝试图片优化建议机制，但执行率极低（&lt;15%）。强制卡上架才能真正改变供给质量，参照 Amazon 对不合规商品直接下架的处理逻辑。同时提供 AI 辅助修复，大幅降低小卖家的合规成本。
+  </div>
+
+  <hr class="divider">
+
+  <!-- Layer 2 -->
+  <h3>层二：买家侧 — AI 自动生成尺寸卡</h3>
+
+  <h4>触发条件</h4>
+  <p>商品详情页加载时，AI 扫描该商品已上传的全部图片，提取尺寸数据。</p>
+
+  <h4>数据来源优先级</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>优先级</th>
+        <th>数据来源</th>
+        <th>处理方式</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>① 高</td>
+        <td>卖家已上传合规的槽位③（尺寸规格图）</td>
+        <td>直接读取英文数据，置信度高</td>
+      </tr>
+      <tr>
+        <td>② 中</td>
+        <td>槽位③不合规或缺失</td>
+        <td>OCR 扫描所有图片，识别中文尺寸标注并换算</td>
+      </tr>
+      <tr>
+        <td>③ 无</td>
+        <td>图片无任何尺寸信息</td>
+        <td>不显示尺寸卡，避免误导</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>展示形式（嵌入商品详情页，位于发货信息下方）</h4>
+
+  <div class="spec-card">📐 AI-extracted Dimensions
+┌──────────┬──────────┬──────────────┐
+│  9.8 in  │  5.9 in  │  ~ clutch    │
+│  Length  │  Height  │  Size ref    │
+│  25 cm   │  15 cm   │  small bag   │
+└──────────┴──────────┴──────────────┘
+ℹ About the size of an iPad mini · Auto-extracted · Verify with seller</div>
+
+  <h4>设计细节</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>设计选择</th>
+        <th>理由</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>英寸为主、厘米为辅</td>
+        <td>符合美国用户认知习惯，厘米作为参考保留</td>
+      </tr>
+      <tr>
+        <td>加入日常物品类比</td>
+        <td>「About the size of an iPad mini」帮助用户建立直觉判断，无需换算</td>
+      </tr>
+      <tr>
+        <td>标注「Auto-extracted · Verify with seller」</td>
+        <td>管理用户预期，避免因 AI 误识导致信任损失</td>
+      </tr>
+      <tr>
+        <td>卡片使用绿色系</td>
+        <td>与报错红色系区分，视觉上传递「这是帮你的信息」</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <!-- Summary -->
+  <h3>设计价值总结</h3>
+
+  <table class="summary-highlight">
+    <thead>
+      <tr>
+        <th>维度</th>
+        <th>现状</th>
+        <th>设计后</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>买家获取尺寸信息</td>
+        <td>手动 Google 换算，中途流失</td>
+        <td>商品页内直接读取英寸 + 类比参考</td>
+      </tr>
+      <tr>
+        <td>卖家图片质量</td>
+        <td>复用国内素材，无规范引导</td>
+        <td>强制槽位 + AI 扫描 + 一键修复</td>
+      </tr>
+      <tr>
+        <td>平台整体供给质量</td>
+        <td>依赖卖家自觉</td>
+        <td>系统性门控，不达标不上架</td>
+      </tr>
+      <tr>
+        <td>用户信任感建立</td>
+        <td>无尺寸参考 → 退货率高</td>
+        <td>透明化规格 → 降低预期落差</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    <strong>✦ 这个设计的 AI-specific 价值在于：</strong>
+    单纯的规则引擎无法完成「读懂图片中的中文标注并换算」这一步——这需要 OCR + 语义理解 + 单位转换的组合能力，是真正需要 AI 介入的场景，而非规则能替代的。卖家侧的「一键修复」和买家侧的「自动生成尺寸卡」，都依赖这一核心 AI 能力。
+  </div>
+
+</div>
+</body>
+</html>
